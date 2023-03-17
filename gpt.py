@@ -18,7 +18,6 @@ def generate_response(prompt, model_engine="gpt-3.5-turbo"):
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt},
             ],
-        max_tokens=2048
     )
     output = response['choices'][0]['message']['content']
     return output
@@ -26,21 +25,31 @@ def generate_response(prompt, model_engine="gpt-3.5-turbo"):
 def main():
 
     # Define the models we want to use
-    model_choices = ["gpt-3.5-turbo", "gpt-4"]
+    model_choices = ["gpt-3.5-turbo", "gpt-4","gpt-4-32k"]
 
     # Now make a dictionary of the models and their descriptions and a name for the model
     model_descriptions = {
         "gpt-3.5-turbo": "GPT-3.5 Turbo is a 3.5B parameter model trained on a large corpus of text data.",
         "gpt-4": "GPT-4 is a 4.5B parameter model trained on a large corpus of text data.",
+        "gpt-4-32k": "GPT-4-32k is a 4.5B parameter model trained on a large corpus of text data with a larger context length",
     }
+
+    # Create a dictionary of the models and their names
     model_name = {
         "gpt-3.5-turbo": "GPT-3.5 Turbo",
         "gpt-4": "GPT-4",
+        "gpt-4-32k": "GPT-4 32k",
+    }
+
+    # Create a dictionary of the models and their prices per token
+    model_price_per_thousand_tokens = {
+        "gpt-3.5-turbo": 0.002,
+        "gpt-4": 0.03,
+        "gpt-4-32k": 0.06,
     }
 
     # Now let's select the model we want to use using questionary with the choices
     # we defined above and with descriptions for each model
-
     model_request = questionary.select(
         "Which model do you want to use?",
         choices=["GPT-3.5 Turbo", "GPT-4"],
