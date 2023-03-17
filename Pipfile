@@ -8,6 +8,7 @@ openai = "*"
 python-dotenv = "*"
 chronological = "*"
 questionary = "*"
+black = "*"
 
 [dev-packages]
 
