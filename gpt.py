@@ -37,22 +37,49 @@ def num_tokens_from_messages(messages, allowed_models, model="gpt-3.5-turbo"):
 See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
 
 
-def generate_messages(prompt):
+def initialize_messages(content="You are a helpful assistant."):
+    """
+    Initializes the messages list.
+    """
     messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": prompt},
+        {"role": "system", "content": content},
     ]
     return messages
 
 
-def generate_response(prompt, model_engine="gpt-3.5-turbo"):
+def generate_user_role_message(prompt):
+    """
+    Generates a user role message.
+    """
+    return {"role": "user", "content": prompt}
+
+
+def append_messages(messages, prompt):
+    """
+    Appends a message to the messages list.
+    """
+    messages.append(prompt)
+    return messages
+
+
+def generate_response(messages, model_engine="gpt-3.5-turbo"):
     response = openai.ChatCompletion.create(
         model=model_engine,
-        messages=generate_messages(prompt)
+        messages=messages,
     )
-    output = response["choices"][0]["message"]["content"]
-    tokens_used = response["usage"]["prompt_tokens"]
-    return output, tokens_used
+    #print(response)
+    content = response["choices"][0]["message"]["content"]
+
+    # Now let's create message dictionary for the assistant response
+    assistant_response = {"role": "assistant", "content": content}
+
+    # Now we append the assistant response to the messages list
+    messages.append(assistant_response)
+
+    prompt_tokens = response["usage"]["prompt_tokens"]
+    completion_tokens = response["usage"]["completion_tokens"]
+    total_tokens = response["usage"]["total_tokens"]
+    return content, total_tokens
 
 
 def main():
@@ -95,44 +122,33 @@ def main():
     # First we get the encoding
     encoding = tiktoken.encoding_for_model(model_engine)
 
+    # Let us initialize the messages list with the system role
+    messages = initialize_messages()
+
     # Now let's create a loop where we ask the user for a question using questionary
-    # After we get a reponse, we ask if the user wishes to continue.
+    # After we get a response, we ask if the user wishes to continue.
     # If so, we ask another question. If not, we exit the program.
 
     while True:
         topic = questionary.text("What topic do you want to talk about?").ask()
 
         # Generate the messages
-        messages = generate_messages(topic)
+        user_role_message = generate_user_role_message(topic)
 
-        # Let's count the number of tokens in the messages
-        num_tokens = num_tokens_from_messages(messages, model_choices, model=model_engine)
-        print(f"The estimated number of tokens used is {num_tokens}.")
+        # Append the messages
+        messages = append_messages(messages, user_role_message)
 
-        # Now we can estimate the cost of the request
-        cost = num_tokens * model_price_per_thousand_tokens[model_engine] / 1000
-        print(f"The estimated cost of this request is ${cost:.5f}.")
-
-        # Now use questionary to ask the user if they want to continue
-        continue_request = questionary.confirm(
-            "Do you want to continue with this request?"
-        ).ask()
-
-        # If the user doesn't want to continue, we break out of the loop
-        if not continue_request:
-            print("Goodbye!")
-            break
-
-        response, tokens_used = generate_response(topic, model_engine=model_engine)
+        response_text, total_tokens = generate_response(messages, model_engine=model_engine)
 
         print(f"Response from {model_name[model_engine]}:\n")
 
-        print(response)
+        print(response_text)
 
-        # Print a line break
         print()
 
-        print(f"Tokens used: {tokens_used}\n")
+        # Estimate the cost of the request
+        total_cost = total_tokens * model_price_per_thousand_tokens[model_engine] / 1000
+        print(f"Tokens used: {total_tokens}. Cost: ${total_cost:.5f}.")
 
         continue_chatting = questionary.confirm(
             "Do you want to continue chatting?"
