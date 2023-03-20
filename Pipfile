@@ -9,6 +9,7 @@ python-dotenv = "*"
 chronological = "*"
 questionary = "*"
 black = "*"
+tiktoken = "*"
 
 [dev-packages]
 
