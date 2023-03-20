@@ -100,11 +100,20 @@ def main():
         "gpt-4-32k": "GPT-4 32k",
     }
 
+    # OpenAI has different prices for different models
+    # Moreover for GPT-4, the prices are different for inputs
+    # and outputs
+
     # Create a dictionary of the models and their prices per token
-    model_price_per_thousand_tokens = {
+    model_price_per_thousand_tokens_prompt = {
         "gpt-3.5-turbo": 0.002,
         "gpt-4": 0.03,
         "gpt-4-32k": 0.06,
+    }
+    model_price_per_thousand_tokens_completion = {
+        "gpt-3.5-turbo": 0.002,
+        "gpt-4": 0.06,
+        "gpt-4-32k": 0.12,
     }
 
     # Now let's select the model we want to use using questionary with the choices
@@ -138,6 +147,11 @@ def main():
         # Append the messages
         messages = append_messages(messages, user_role_message)
 
+        # Let us estimate the cost of the request
+        total_tokens = num_tokens_from_messages(messages, model_choices, model=model_engine)
+        total_cost = total_tokens * model_price_per_thousand_tokens_prompt[model_engine] / 1000
+        print(f"Prompt: Tokens used: {total_tokens}. Cost: ${total_cost:.5f}.")
+
         response_text, total_tokens = generate_response(messages, model_engine=model_engine)
 
         print(f"Response from {model_name[model_engine]}:\n")
@@ -147,8 +161,8 @@ def main():
         print()
 
         # Estimate the cost of the request
-        total_cost = total_tokens * model_price_per_thousand_tokens[model_engine] / 1000
-        print(f"Tokens used: {total_tokens}. Cost: ${total_cost:.5f}.")
+        total_cost = total_tokens * model_price_per_thousand_tokens_completion[model_engine] / 1000
+        print(f"Completion: Tokens used: {total_tokens}. Cost: ${total_cost:.5f}.")
 
         continue_chatting = questionary.confirm(
             "Do you want to continue chatting?"
